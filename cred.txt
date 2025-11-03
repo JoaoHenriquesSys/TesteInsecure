@@ -1,0 +1,3 @@
+Password="sadfads"
+Cred="asd"
+AWS="asd"
