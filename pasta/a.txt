@@ -1,0 +1,3 @@
+password="asd"
+token="asdasd"
+aws_secret="asdasd"
