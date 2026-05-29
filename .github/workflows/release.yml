@@ -1,29 +1,46 @@
-name: Release
+name: Auto Version Tag
 
 on:
-  push:
+  pull_request:
     branches: [main]
-
-permissions:
-  contents: write
-  issues: write
-  pull-requests: write
+    types: [closed]
 
 jobs:
-  release:
+  tag:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0          
+          fetch-depth: 0
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
+      - name: Import GPG key
+        run: |
+          echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --batch --import
 
-      - run: npm ci
-
-      - name: Semantic Release
+      - name: Bump version and sign tag
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx semantic-release
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          git fetch --tags
+
+          LATEST=$(git tag --sort=-v:refname | grep '^v[0-9]' | head -1)
+          if [ -z "$LATEST" ]; then LATEST="v0.0.0"; fi
+
+          MAJOR=$(echo $LATEST | cut -d. -f1 | tr -d 'v')
+          MINOR=$(echo $LATEST | cut -d. -f2)
+          PATCH=$(echo $LATEST | cut -d. -f3)
+          NEW="v$MAJOR.$MINOR.$((PATCH + 1))"
+
+          echo "Versão anterior: $LATEST → Nova: $NEW"
+
+          git config user.email "github-actions@github.com"
+          git config user.name "GitHub Actions"
+          git config user.signingkey "DEBB24E50904EF14"
+          git config gpg.program gpg
+
+          echo "$GPG_PASSPHRASE" | gpg --batch --pinentry-mode loopback \
+            --passphrase-fd 0 --quiet
+
+          git tag -s -a $NEW -m "Release $NEW"
+          git push origin $NEW
