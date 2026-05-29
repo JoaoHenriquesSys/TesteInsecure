@@ -1,3 +1,6 @@
 ip="192.10.1.1"
 systemctl execute
 abc@gmail.com
+
+AWS_PASS = "asdasdasdasdasd"
+POSTGRES_PASS = "asdasd"
