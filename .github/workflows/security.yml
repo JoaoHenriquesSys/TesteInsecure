@@ -2,7 +2,7 @@ name: Secret Scanning
 
 on:
   push:
-    branches: *
+    branches: [main,teste]
   pull_request:
     branches: [main]
 
@@ -18,3 +18,8 @@ jobs:
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
+
+      - name: TruffleHog
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
